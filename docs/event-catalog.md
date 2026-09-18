@@ -104,8 +104,10 @@ The meter id must exist in `meters.json` (or in a meters file of your own) or th
 
 | Type | Grade | Meters | Notes |
 |---|---|---|---|
+| `marriage_proposal` | 9 | love, tenderness, humor, confront — all by rule | Five rules: accepted/rejected × target/witness, plus catching the farmer proposing to someone else |
 | `bomb` | 8 | confront 1, humor 0.25 | Pierces walls, wakes sleepers, heard across the map |
 | `room` | 7 | confront 1 | Entering someone's bedroom |
+| `dating_proposal` | 6 | love, tenderness, humor, confront — all by rule | Same five-rule shape as `marriage_proposal`, lighter weights |
 | `sleep_outside` | 6 | confront 0.6, tenderness 0.5, humor 0.3 | Passing out — worrying, endearing and a bit funny at once |
 | `trash` | 5 | confront 1 | Going through a trash can |
 | `gift` | 4 | tenderness 2 (target) | Two rules: a hated or disliked gift earns no warmth |
@@ -132,6 +134,7 @@ what they mean and how they are worded:
 | `purchase` | `items`, `shop`, `shopDisplay` |
 | `place` / `map` | `action` (`enter`/`leave`), `from`, `to`, `place`, `placeDisplay`, `owners` |
 | `bomb` | `count`, `radius` |
+| `dating_proposal` / `marriage_proposal` | `result` (`accepted`/`rejected`), `reason` (only when rejected — `not_datable`, `already_committed`, `already_together`, `too_soon`, and `marriage_proposal` also `not_dating_yet`/`house_too_small`) |
 
 Rules match on these with `Payload`, phrases print them with `{p:key}`, and a rule can be written against any
 key a sensor writes without the sensor knowing the rule exists.

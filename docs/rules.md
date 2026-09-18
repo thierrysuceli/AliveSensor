@@ -68,6 +68,7 @@ top of Shane's ×3, not instead of it.
 | `TimeFrom` / `TimeTo` | game clock | `1800` / `2600` | Inclusive. A single window inside one day — it does not wrap past midnight. |
 | `MinHearts` / `MaxHearts` | int | `2` | Hearts between the farmer and this witness |
 | `MinCertainty` | 1–5 | `4` | How sure this witness has to be for the rule to apply |
+| `PlayerPartner` | bool | `true` | This witness is the farmer's own current partner — dating, engaged or married, at the moment of the event. `false` requires that they are not. Lets a rule single out "your own partner watched this" without knowing their name in advance. |
 
 When `NearbyAge` matches with `Present: true`, the engine writes the result into the payload for you:
 `{p:nearby<Age>Count}` and `{p:nearby<Age>Names}` — so `{p:nearbychildCount?a child|# children}` renders as
@@ -155,3 +156,19 @@ warmth:
   "When": { "Role": [ "target" ], "Payload": { "taste": "hated" } },
   "Set": { "tenderness": 0 } }
 ```
+
+**`PlayerPartner`, and a rule the target must not also match.** On `marriage_proposal`, proposing to someone
+while the farmer's own partner is standing right there is worth an outright confrontation — regardless of
+whether the proposal was accepted:
+
+```json
+{ "Name": "proposing to someone else, right in front of you",
+  "When": { "Role": [ "bystander", "relative" ], "PlayerPartner": true },
+  "Set": { "confront": 20 },
+  "Multiply": { "tenderness": 0, "humor": 0, "love": 0 } }
+```
+
+`Role` is restricted to `bystander`/`relative` on purpose. Without it, a farmer re-proposing to their own
+existing partner would match this rule too — `PlayerPartner` alone doesn't know that the witness and the
+event's target are the same person, only that a rule elsewhere already gave that witness the `target` role for
+this specific event.

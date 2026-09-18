@@ -100,6 +100,8 @@ internal sealed class RuleEvaluator
             return false;
         if (when.MinCertainty is int minLevel && witness.Level < minLevel)
             return false;
+        if (when.PlayerPartner is bool wantsPartner && IsPlayerPartner(npc) != wantsPartner)
+            return false;
 
         foreach (var (key, expected) in when.Payload)
         {
@@ -182,6 +184,20 @@ internal sealed class RuleEvaluator
         catch
         {
             return 0;
+        }
+    }
+
+    /// <summary>Whether this witness is the farmer's own current romantic partner, at whatever stage.</summary>
+    private static bool IsPlayerPartner(string npc)
+    {
+        try
+        {
+            return Game1.player?.friendshipData.TryGetValue(npc, out Friendship? friendship) == true
+                && friendship is { Status: FriendshipStatus.Dating or FriendshipStatus.Engaged or FriendshipStatus.Married };
+        }
+        catch
+        {
+            return false;
         }
     }
 }

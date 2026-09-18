@@ -23,6 +23,7 @@ internal sealed class SensorHub
         PassOut = new PassOutSensor(mod);
         LockedDoor = new LockedDoorSensor(mod);
         Talk = new TalkSensor(mod);
+        Proposal = new ProposalSensor(mod);
         SpaceCore = new SpaceCoreSensors(mod);
     }
 
@@ -34,6 +35,7 @@ internal sealed class SensorHub
     public PassOutSensor PassOut { get; }
     public LockedDoorSensor LockedDoor { get; }
     public TalkSensor Talk { get; }
+    public ProposalSensor Proposal { get; }
     public SpaceCoreSensors SpaceCore { get; }
 
     /// <summary>Sensor wiring status for as_status: name → "ok" or failure reason.</summary>
@@ -55,6 +57,7 @@ internal sealed class SensorHub
         Patch("passOut", () => PassOut.Apply(harmony));
         Patch("lockedDoor", () => LockedDoor.Apply(harmony));
         Patch("talk", () => Talk.Apply(harmony));
+        Patch("proposal", () => Proposal.Apply(harmony));
 
         _mod.SpaceCore.Subscribe(SpaceCore.OnGift, SpaceCore.OnEaten, SpaceCore.OnBomb);
         string spaceCore = _mod.SpaceCore.Subscribed ? "ok (SpaceCore)" : "OFF (SpaceCore events unavailable)";

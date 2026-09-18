@@ -93,10 +93,18 @@ internal sealed class RuleConditions
     /// <summary>Certainty of this witness, 1–5.</summary>
     public int? MinCertainty { get; set; }
 
+    /// <summary>
+    /// True: only matches when this witness is the farmer's own current partner (dating, engaged or married).
+    /// False: only matches when they are not. Lets a rule single out "your own partner watched this" without
+    /// knowing their name in advance — e.g. catching the farmer proposing to somebody else.
+    /// </summary>
+    public bool? PlayerPartner { get; set; }
+
     public bool IsEmpty =>
         Witness.Count == 0 && NotWitness.Count == 0 && Role.Count == 0 && Payload.Count == 0 && NearbyAge is null
         && Weather.Count == 0 && Season.Count == 0 && Weekday.Count == 0 && Location.Count == 0 && Outdoors is null
-        && TimeFrom is null && TimeTo is null && MinHearts is null && MaxHearts is null && MinCertainty is null;
+        && TimeFrom is null && TimeTo is null && MinHearts is null && MaxHearts is null && MinCertainty is null
+        && PlayerPartner is null;
 }
 
 /// <summary>"Is there a child within eight tiles?" — the kind of thing that changes how an adult reacts.</summary>

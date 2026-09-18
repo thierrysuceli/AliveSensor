@@ -20,6 +20,8 @@ internal static class EventTypes
     public const string Purchase = "purchase";
     public const string Consume = "consume";
     public const string NpcMove = "npc_move";
+    public const string DatingProposal = "dating_proposal";
+    public const string MarriageProposal = "marriage_proposal";
 
     /// <summary>Witness range meaning "the whole map".</summary>
     public const int WholeMap = -1;

@@ -189,6 +189,7 @@ public sealed class SensorConfig
     public bool Purchase { get; set; } = true;
     public bool Consume { get; set; } = true;
     public bool NpcMove { get; set; } = false;
+    public bool Proposal { get; set; } = true;
 }
 
 public sealed class DistanceBand

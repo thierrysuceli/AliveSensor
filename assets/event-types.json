@@ -302,6 +302,152 @@
       }
     },
 
+    "dating_proposal": {
+      "Grade": 6,
+      "HalfLifeDays": 6,
+      "RangeTiles": 10,
+      "MinCertainty": 3,
+      "Meters": {},
+      "Rules": [
+        {
+          "Name": "she said yes",
+          "When": { "Role": [ "target" ], "Payload": { "result": "accepted" } },
+          "Set": { "love": 4 },
+          "Phrases": {
+            "Full": "{actor} asking {target} to date them, and {target} saying yes[, {nearPhrase}]"
+          }
+        },
+        {
+          "Name": "the town is happy for them",
+          "When": { "Role": [ "bystander", "relative" ], "Payload": { "result": "accepted" } },
+          "Set": { "tenderness": 1.5 },
+          "Phrases": {
+            "Full": "{actor} asking {target} to date them, and {target} saying yes[, {nearPhrase}]"
+          }
+        },
+        {
+          "Name": "turned down gently",
+          "When": { "Role": [ "target" ], "Payload": { "result": "rejected" } },
+          "Silent": true,
+          "Phrases": {
+            "Full": "{actor} asking {target} to date them, and {target} turning them down ({reasonText})"
+          }
+        },
+        {
+          "Name": "awkward to watch",
+          "When": { "Role": [ "bystander", "relative" ], "Payload": { "result": "rejected" } },
+          "Set": { "humor": 1.2 },
+          "Phrases": {
+            "Full": "{actor} asking {target} to date them, and getting turned down right there ({reasonText})"
+          }
+        },
+        {
+          "Name": "caught two-timing",
+          "When": { "Role": [ "bystander", "relative" ], "PlayerPartner": true },
+          "Set": { "confront": 10 },
+          "Multiply": { "tenderness": 0, "humor": 0 },
+          "Phrases": {
+            "Full": "{actor} asking {target} to date them — while you were standing right there"
+          }
+        }
+      ],
+      "Tokens": {
+        "reasonText": {
+          "From": "reason",
+          "Map": {
+            "not_datable": "not someone who dates",
+            "already_committed": "already spoken for",
+            "divorced": "still too raw from the divorce",
+            "already_together": "already dating them",
+            "too_soon": "not ready for that yet"
+          },
+          "Default": "not interested"
+        }
+      },
+      "VariantBy": "p:result",
+      "Variants": {
+        "accepted": { "Full": "{actor} asking {target} to date them, and hearing yes" },
+        "rejected": { "Full": "{actor} asking {target} to date them, and getting turned down" }
+      },
+      "Phrases": {
+        "Full": "{actor} asking {target} to date them"
+      }
+    },
+
+    "marriage_proposal": {
+      "Grade": 9,
+      "HalfLifeDays": 10,
+      "RangeTiles": 12,
+      "MinCertainty": 3,
+      "Meters": {},
+      "Rules": [
+        {
+          "Name": "the answer is yes",
+          "When": { "Role": [ "target" ], "Payload": { "result": "accepted" } },
+          "Set": { "love": 8 },
+          "Phrases": {
+            "Full": "{actor} proposing marriage to {target}, and {target} saying yes[, {nearPhrase}]"
+          }
+        },
+        {
+          "Name": "the whole town will hear about this",
+          "When": { "Role": [ "bystander", "relative" ], "Payload": { "result": "accepted" } },
+          "Set": { "tenderness": 3 },
+          "Phrases": {
+            "Full": "{actor} proposing marriage to {target}, and {target} saying yes[, {nearPhrase}]"
+          }
+        },
+        {
+          "Name": "turned down",
+          "When": { "Role": [ "target" ], "Payload": { "result": "rejected" } },
+          "Silent": true,
+          "Phrases": {
+            "Full": "{actor} proposing marriage to {target}, and {target} turning them down ({reasonText})"
+          }
+        },
+        {
+          "Name": "an awkward proposal",
+          "When": { "Role": [ "bystander", "relative" ], "Payload": { "result": "rejected" } },
+          "Set": { "humor": 1.8 },
+          "Phrases": {
+            "Full": "{actor} proposing marriage to {target}, and getting turned down right there ({reasonText})"
+          }
+        },
+        {
+          "Name": "proposing to someone else, right in front of you",
+          "When": { "Role": [ "bystander", "relative" ], "PlayerPartner": true },
+          "Set": { "confront": 20 },
+          "Multiply": { "tenderness": 0, "humor": 0, "love": 0 },
+          "Phrases": {
+            "Full": "{actor} proposing marriage to {target} — while you were standing right there"
+          }
+        }
+      ],
+      "Tokens": {
+        "reasonText": {
+          "From": "reason",
+          "Map": {
+            "not_datable": "not someone who marries",
+            "already_committed": "already spoken for",
+            "divorced": "still too raw from the divorce",
+            "not_dating_yet": "not even dating them yet",
+            "already_together": "already engaged to them",
+            "house_too_small": "citing the cramped house",
+            "too_soon": "not ready for that yet"
+          },
+          "Default": "not ready for that"
+        }
+      },
+      "VariantBy": "p:result",
+      "Variants": {
+        "accepted": { "Full": "{actor} proposing marriage to {target}, and hearing yes" },
+        "rejected": { "Full": "{actor} proposing marriage to {target}, and getting turned down" }
+      },
+      "Phrases": {
+        "Full": "{actor} proposing marriage to {target}"
+      }
+    },
+
     "npc_move": {
       "Grade": 1,
       "HalfLifeDays": 1,

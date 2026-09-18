@@ -493,3 +493,115 @@ internal static class ConsumeSensor
         return ids.Contains(item.ItemId) || ids.Contains(item.QualifiedItemId);
     }
 }
+
+/// <summary>
+/// S14 — dating and marriage proposals: a bouquet ("(O)458") or mermaid pendant ("(O)460") handed to an NPC.
+/// Prefix+postfix on NPC.tryToReceiveActiveObject, the one method that decides both — vanilla never raises an
+/// event for either, so this is the only way to know an answer was given, let alone what it was.
+/// </summary>
+internal sealed class ProposalSensor
+{
+    private const string BouquetId = "(O)458";
+    private const string PendantId = "(O)460";
+
+    private static ProposalSensor? _instance;
+    private readonly ModEntry _mod;
+
+    public ProposalSensor(ModEntry mod) => _mod = mod;
+
+    /// <summary>What the prefix saw before the vanilla method ran, so the postfix can tell what changed.</summary>
+    private sealed class Capture
+    {
+        public string ItemId = "";
+        public FriendshipStatus? Before;
+    }
+
+    public bool Apply(Harmony harmony)
+    {
+        _instance = this;
+        var target = AccessTools.Method(typeof(NPC), nameof(NPC.tryToReceiveActiveObject), new[] { typeof(Farmer), typeof(bool) });
+        harmony.Patch(target,
+            prefix: new HarmonyMethod(typeof(ProposalSensor), nameof(Prefix)),
+            postfix: new HarmonyMethod(typeof(ProposalSensor), nameof(Postfix)));
+        _mod.Log.Debug("Harmony", "Patched NPC.tryToReceiveActiveObject (dating/marriage proposal sensor).");
+        return true;
+    }
+
+    private static void Prefix(NPC __instance, Farmer who, bool probe, out Capture? __state)
+    {
+        __state = null;
+        try
+        {
+            // probe=true is just the game asking "would this do anything" (e.g. cursor hover); nothing happens.
+            string? itemId = who?.ActiveObject?.QualifiedItemId;
+            if (probe || itemId is not (BouquetId or PendantId))
+                return;
+            FriendshipStatus? before = who!.friendshipData.TryGetValue(__instance.Name, out Friendship? f) ? f.Status : (FriendshipStatus?)null;
+            __state = new Capture { ItemId = itemId, Before = before };
+        }
+        catch (Exception ex)
+        {
+            _instance?._mod.Log.Error("Proposal sensor prefix failed", ex);
+        }
+    }
+
+    private static void Postfix(NPC __instance, Farmer who, bool __result, Capture? __state)
+    {
+        // __result is vanilla's own "did tryToReceiveActiveObject handle this at all" — false means the item
+        // wasn't a bouquet/pendant after all (shouldn't happen given the prefix's check, but cheap to guard).
+        if (__state is null || !__result)
+            return;
+        try
+        {
+            _instance?.OnProposal(__instance, who, __state);
+        }
+        catch (Exception ex)
+        {
+            _instance?._mod.Log.Error("Proposal sensor failed", ex);
+        }
+    }
+
+    private void OnProposal(NPC npc, Farmer who, Capture capture)
+    {
+        if (!who.IsLocalPlayer || !_mod.Config.Sensors.Proposal || !_mod.Recorder.CanRecord("Proposal", out _))
+            return;
+
+        bool isMarriage = capture.ItemId == PendantId;
+        FriendshipStatus wants = isMarriage ? FriendshipStatus.Engaged : FriendshipStatus.Dating;
+        FriendshipStatus? after = who.friendshipData.TryGetValue(npc.Name, out Friendship? f) ? f.Status : (FriendshipStatus?)null;
+        bool accepted = after == wants && capture.Before != wants;
+
+        string type = isMarriage ? EventTypes.MarriageProposal : EventTypes.DatingProposal;
+        var draft = new EventDraft(type, "Proposal", npc.currentLocation, npc.TilePoint) { Target = npc.Name };
+        draft.Direct.Add(npc.Name);
+        draft.Payload["result"] = accepted ? "accepted" : "rejected";
+        if (!accepted)
+            draft.Payload["reason"] = RejectionReason(npc, who, isMarriage, capture.Before);
+
+        _mod.Log.Debug("Sensor:Proposal", $"{who.Name} {(isMarriage ? "proposed marriage to" : "asked to date")} {npc.Name} @ {npc.currentLocation?.NameOrUniqueName}: "
+            + $"{draft.Payload["result"]}{(draft.Payload.TryGetValue("reason", out string? r) ? $" ({r})" : "")}.");
+        _mod.Recorder.Record(draft);
+    }
+
+    /// <summary>
+    /// A best-effort read of why it was turned down, from the same public state vanilla's own rejection
+    /// dialogue branches on (NPC.tryToReceiveActiveObject). Good enough to colour the wording; not meant to
+    /// reproduce every one of vanilla's dialogue variants.
+    /// </summary>
+    private static string RejectionReason(NPC npc, Farmer who, bool isMarriage, FriendshipStatus? before)
+    {
+        if (!npc.datable.Value)
+            return "not_datable";
+        if (npc.isMarriedOrEngaged())
+            return "already_committed";
+        if (before is FriendshipStatus.Divorced)
+            return "divorced";
+        if (isMarriage && before != FriendshipStatus.Dating)
+            return "not_dating_yet";
+        if (before is FriendshipStatus.Dating or FriendshipStatus.Engaged)
+            return "already_together";
+        if (isMarriage && who.HouseUpgradeLevel < 1)
+            return "house_too_small";
+        return "too_soon";
+    }
+}
