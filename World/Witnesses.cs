@@ -29,6 +29,12 @@ internal sealed class WitnessResolver
     /// <summary>Bedroom lookup (set by ModEntry); null disables the walls and asleep-in-bedroom checks.</summary>
     public RoomIndex? Rooms { get; set; }
 
+    /// <summary>
+    /// Whether a villager may be written about at all (set by ModEntry from AliveNpcs' eligible list, which
+    /// honours both the player's own switches and the community opt-out list). Null allows everyone.
+    /// </summary>
+    public Func<string, bool>? IsEligible { get; set; }
+
     public WitnessResolver(Func<ModConfig> config, EventCatalog catalog, Log log)
     {
         _config = config;
@@ -67,6 +73,13 @@ internal sealed class WitnessResolver
                 if (exclude.Contains(name))
                 {
                     checks.Add(new WitnessCheck(name, location.NameOrUniqueName, distance, 0, 0, false, "excluded (actor or interlocutor)"));
+                    continue;
+                }
+                if (IsEligible is not null && !IsEligible(name))
+                {
+                    // Switched off by the player, or on the community opt-out list: their author asked for no
+                    // AI content. Nothing is recorded for them, so they cannot surface in any prompt later.
+                    checks.Add(new WitnessCheck(name, location.NameOrUniqueName, distance, 0, 0, false, "not eligible for AI content in AliveNpcs"));
                     continue;
                 }
                 if (npc.IsInvisible)

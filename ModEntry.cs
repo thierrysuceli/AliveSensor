@@ -65,7 +65,7 @@ public sealed class ModEntry : Mod
         Relationships = new Relationships(Log);
         Rooms = new RoomIndex(() => Config, Log);
         Landmarks = new Landmarks(() => Config, Homes, Rooms, Log);
-        Witnesses = new WitnessResolver(() => Config, Catalog, Log) { Rooms = Rooms };
+        Witnesses = new WitnessResolver(() => Config, Catalog, Log) { Rooms = Rooms, IsEligible = name => AliveNpcs.IsEligible(name) };
         Rules = new RuleEvaluator(Catalog, Log);
         Recorder = new EventRecorder(this);
         Overlay = new Overlay(() => Config, Log);
@@ -106,6 +106,17 @@ public sealed class ModEntry : Mod
         new ConsoleCommands(this).Register(helper.ConsoleCommands);
 
         Log.Info($"AliveSensor {ModManifest.Version} loaded. Debug logs: {(Config.Debug.Enabled ? "ON" : "off — use 'as_debug on'")}. Commands: as_help.");
+    }
+
+    /// <summary>
+    /// SMAPI is shutting the mod down. The prompt-block registrations AliveNpcs handed back are disposed here,
+    /// so a block can never keep contributing text after AliveSensor is gone.
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            AliveNpcs?.Dispose();
+        base.Dispose(disposing);
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -151,6 +162,7 @@ public sealed class ModEntry : Mod
         Store.PruneCounters(today.DaysSinceStart);
         ApplyRetention(today.DaysSinceStart);
         Sensors.ResetDaily();
+        AliveNpcs.RefreshEligibleNpcs();
         Feelings.OnDayStarted();
     }
 

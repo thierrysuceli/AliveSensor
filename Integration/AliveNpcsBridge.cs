@@ -54,6 +54,7 @@ internal sealed class AliveNpcsBridge
 
         Api = TryGetApi<IAliveNpcsApi>("IAliveNpcsApi");
         Experimental = TryGetApi<IAliveNpcsExperimentalContentApi>("IAliveNpcsExperimentalContentApi");
+        ReadCapabilities();
 
         HasCurrentNpc = Probe("DialoguePatches.CurrentNpc", ProbeCurrentNpc);
         HasRelationshipPairs = Probe("NpcPersonalities.RelationshipPairs", ProbeRelationshipPairs);
@@ -240,6 +241,38 @@ internal sealed class AliveNpcsBridge
         }
     }
 
+    /// <summary>
+    /// What this AliveNpcs build supports, as it reports itself. Asking the build beats comparing version
+    /// strings, which break on forks and pre-releases.
+    /// </summary>
+    public ExperimentalContentCapabilities? Capabilities { get; private set; }
+
+    /// <summary>True when this build accepts the dynamic prompt blocks AliveSensor delivers everything through.</summary>
+    public bool HasDynamicPromptBlocks => Capabilities?.DynamicPromptBlocks ?? Experimental is not null;
+
+    /// <summary>True when a block can target the first-meeting greeting, not just ordinary dialogue.</summary>
+    public bool HasGreetingTarget => Capabilities?.GreetingPromptTarget ?? false;
+
+    private void ReadCapabilities()
+    {
+        if (Experimental is null)
+            return;
+        try
+        {
+            Capabilities = Experimental.GetCapabilities();
+            if (Capabilities is not null)
+            {
+                _log.Debug("AliveNpcs", $"Capabilities: dynamicPromptBlocks={Capabilities.DynamicPromptBlocks}, greetingTarget={Capabilities.GreetingPromptTarget}, "
+                    + $"modeScopedNpcContext={Capabilities.ModeScopedNpcContext}, storyArcHooks={Capabilities.StoryArcHooks}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // An older build without the method: fall back to assuming only what we can see.
+            _log.Debug("AliveNpcs", $"GetCapabilities unavailable ({ex.GetType().Name}); assuming the baseline feature set.");
+        }
+    }
+
     /// <summary>Whether AliveNpcs handles this NPC at all.</summary>
     public bool IsNpcDisabled(string npcName)
     {
@@ -252,6 +285,52 @@ internal sealed class AliveNpcsBridge
             return false;
         }
     }
+
+    /// <summary>
+    /// The villagers AliveNpcs is willing to write for: everyone the player has not switched off, minus the
+    /// characters whose authors asked the community not to generate AI content for them. AliveSensor keeps no
+    /// memories at all for anyone outside this list, so an opted-out character never appears in a prompt —
+    /// not as a witness, and not as someone another villager was talking about.
+    ///
+    /// Refreshed once per day; null means AliveNpcs could not answer, and then nobody is filtered out.
+    /// </summary>
+    public IReadOnlySet<string>? EligibleNpcs => _eligible;
+
+    private HashSet<string>? _eligible;
+
+    /// <summary>Re-read the eligible villagers from AliveNpcs. Cheap, but not something to do every tick.</summary>
+    public void RefreshEligibleNpcs()
+    {
+        if (Api is null)
+            return;
+        try
+        {
+            IEnumerable<string>? names = Api.GetAvailableNpcNames();
+            if (names is null)
+                return;
+
+            var set = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+            if (set.Count == 0)
+            {
+                // An empty list this early usually means "no save loaded yet", not "nobody is allowed".
+                _log.Debug("AliveNpcs", "GetAvailableNpcNames returned nothing; not filtering witnesses this time.");
+                return;
+            }
+
+            int before = _eligible?.Count ?? -1;
+            _eligible = set;
+            if (before != set.Count)
+                _log.Debug("AliveNpcs", $"{set.Count} villager(s) eligible for AI content; anyone else is ignored entirely.");
+        }
+        catch (Exception ex)
+        {
+            _log.Error("Reading the eligible NPC list from AliveNpcs failed", ex);
+        }
+    }
+
+    /// <summary>Whether AliveSensor may record and speak about this villager at all.</summary>
+    public bool IsEligible(string npcName)
+        => _eligible is null || _eligible.Contains(npcName);
 
     private bool Probe(string label, Func<bool> probe)
     {
