@@ -111,6 +111,7 @@ Documentation:
 - [Phrase templates](docs/phrases.md) — the template language and every token
 - [Creating a new event](docs/creating-events.md) — worked example, JSON only and with a new sensor
 - [Configuration and console commands](docs/configuration.md)
+- [AliveNpcs integration](docs/alivenpcs-integration.md) — what AliveSensor uses, what it has to reach into, and why
 
 ## Console commands
 
