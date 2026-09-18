@@ -1,0 +1,102 @@
+{
+  // AliveSensor meters — the feelings an NPC can build up about the farmer.
+  //
+  // A witnessed event can feed several at once: the same round of drinks can amuse one neighbour, worry another
+  // and mean nothing to a third. Each meter fills with the memory's own score (times the weight the event type
+  // gives it), fades on its own clock, and speaks up in its own voice when it passes a level.
+  //
+  // Add a fifth feeling by adding an entry here and giving it weight in event-types.json. No code needed.
+  //
+  // Emote — the bubble the NPC shows while waiting to speak. NPCs can only show these:
+  //   question, angry, exclamation, heart, sleep, sad, happy, x, pause, game, note, blush, can
+  //   (the player's emote wheel lists more, but those are body animations that reuse these same bubbles)
+  //
+  // Delivery — "walkUp" comes over and opens a conversation; "aside" stays quiet and only colours the next
+  //   conversation the farmer starts, which costs no extra AI call.
+  //
+  // Tones — one per level, handed to the AI as {tone} inside "Closing". Write them as feelings, not scripts.
+
+  "Format": 1,
+  "Meters": {
+
+    "confront": {
+      "Label": "confrontation",
+      "Thresholds": [ 15, 30, 50 ],
+      "HalfLifeHours": 3,
+      "Emote": "angry",
+      "Delivery": "walkUp",
+      "Priority": 1.2,
+      "MinCertainty": 4,
+      "MaxPerNpcPerDay": 3,
+      "GrudgeCarryover": 0.4,
+      "Header": "[Why you are talking to the farmer right now]",
+      "Opening": "You walked up to {farmer} yourself — the person in front of you — because of what you just witnessed:",
+      "Tones": [
+        "concerned, curious or a little suspicious — this is the first time it's come up",
+        "openly upset: hurt or angry, demanding a real explanation, and not letting them brush it off — this isn't the first time today",
+        "furious, or deeply and lastingly disappointed — this genuinely changes how you see them, and you won't forget it by tomorrow"
+      ],
+      "Closing": "Open by confronting them about this right away, in your own voice, feeling {tone}. Do not greet them as if nothing happened, and do not switch to another topic first."
+    },
+
+    "humor": {
+      "Label": "amusement",
+      "Thresholds": [ 12, 26, 45 ],
+      "HalfLifeHours": 1.5,
+      "Emote": "note",
+      "Delivery": "walkUp",
+      "Priority": 0.9,
+      "MinCertainty": 4,
+      "MaxPerNpcPerDay": 3,
+      "GrudgeCarryover": 0,
+      "Header": "[Why you are talking to the farmer right now]",
+      "Opening": "You came over to {farmer} yourself — the person in front of you — because of what you just watched them do:",
+      "Tones": [
+        "amused and curious, teasing them lightly about it",
+        "openly laughing about it, ribbing them without mercy but without malice",
+        "in stitches — this is the funniest thing you've seen in weeks and you're going to keep bringing it up"
+      ],
+      "Closing": "Open by teasing them about this right away, in your own voice, feeling {tone}. You're laughing with them, not at them — keep it warm. Do not greet them as if nothing happened, and do not switch to another topic first."
+    },
+
+    "tenderness": {
+      "Label": "fondness",
+      "Thresholds": [ 15, 32, 55 ],
+      "HalfLifeHours": 6,
+      "Emote": "happy",
+      "Delivery": "walkUp",
+      "Priority": 0.8,
+      "MinCertainty": 4,
+      "MaxPerNpcPerDay": 2,
+      "GrudgeCarryover": 0.2,
+      "Header": "[Why you are talking to the farmer right now]",
+      "Opening": "You went over to {farmer} yourself — the person in front of you — because of what you just saw them do:",
+      "Tones": [
+        "quietly pleased with them, wanting to say something kind about it",
+        "genuinely warmed — you like having them around and you want them to know",
+        "touched in a way you'll remember; this is the sort of thing that makes someone family around here"
+      ],
+      "Closing": "Open by bringing this up warmly, in your own voice, feeling {tone}. Say the kind thing plainly, the way a neighbour would. Do not greet them as if nothing happened, and do not switch to another topic first."
+    },
+
+    "love": {
+      "Label": "romantic feeling",
+      "Thresholds": [ 20, 42, 70 ],
+      "HalfLifeHours": 12,
+      "Emote": "heart",
+      "Delivery": "walkUp",
+      "Priority": 1,
+      "MinCertainty": 4,
+      "MaxPerNpcPerDay": 1,
+      "GrudgeCarryover": 0.5,
+      "Header": "[Why you are talking to the farmer right now]",
+      "Opening": "You sought out {farmer} yourself — the person in front of you — because of what just happened between you:",
+      "Tones": [
+        "flustered and drawn to them, not quite able to leave it unsaid",
+        "openly taken with them, and past pretending otherwise",
+        "head over heels, and you want them to hear it from you"
+      ],
+      "Closing": "Open by bringing this up yourself, in your own voice, feeling {tone}. Stay entirely in character — how forward you are is up to who you are. Do not greet them as if nothing happened, and do not switch to another topic first."
+    }
+  }
+}

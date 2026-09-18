@@ -1,0 +1,317 @@
+{
+  // AliveSensor event catalog — everything the mod knows about a kind of witnessed event.
+  //
+  // A sensor only has to record an event of a type listed here, with the payload keys its phrases mention.
+  // Perception, grading, scoring, saturation, conversation prompts and the night's gossip then work on their own.
+  // Drop your own file in "event-types/*.json" (same shape) to add types or replace these; it loads afterwards.
+  //
+  // Phrase language:
+  //   {token}              the token's value, or nothing
+  //   {token?one|many}     picks a form by the token's number (missing = 1); # becomes the number
+  //   [ ... ]              dropped unless every token directly inside has a value
+  //   [ ... | ... ]        the same, with a fallback
+  //   {{ }} [[ ]]          literal braces and brackets
+  //
+  // Tokens available everywhere:
+  //   actor, target, targetPossessive   names as this witness sees them ("you" / "your" for themselves)
+  //   owners, ownersPlain               the room or trash can owners ("Pierre and Caroline's" / "your")
+  //   place                             the place's display name, or "your home" for its owner
+  //   location, nearPhrase, time        where it happened, the nearest landmark, the clock
+  //   count, seen, attempt              times merged into this memory, times THIS witness saw it, attempts today
+  //   secretMode                        "secret" or "open", honouring the "respect keep secret" setting
+  //   p:key  a:key  n:key  you:key      payload value / with an article / as an NPC name / "you" if it's them
+  //
+  // "full" is what a witness who saw it plainly describes, "reduced" what an unsure one makes out, "glimpse"
+  // the barest impression, "past" the third-person line for gossip. "levels" replaces the whole
+  // "You clearly saw …" wrapper for types that need their own wording.
+
+  "Format": 1,
+  "Types": {
+
+    "bomb": {
+      "Grade": 8,
+      "HalfLifeDays": 14,
+      "RangeTiles": -1,
+      "MinCertainty": 3,
+      "Perception": { "ThroughWalls": true, "WakesSleepers": true, "HeardFloor": 0.5 },
+      "Meters": {
+        "confront": { "Weight": 1 },
+        "humor": { "Weight": 0.25 }
+      },
+      "Phrases": {
+        "Levels": {
+          "5": "You clearly saw {actor} set off {count?a bomb|# bombs}[, {nearPhrase}]",
+          "4": "You saw {actor} set off {count?a bomb|# bombs}[, {nearPhrase}]",
+          "3": "You heard {count?an explosion|# explosions}[, {nearPhrase}] and think {actor} was behind it",
+          "2": "You heard {count?an explosion|# explosions}[, {nearPhrase}] and think {actor} may have caused it, but you're not sure",
+          "1": "You heard loud bangs somewhere nearby, but you're not sure what they were"
+        },
+        "Past": "{actor} set off {count?a bomb|# bombs}[ ({nearPhrase})]"
+      }
+    },
+
+    "room": {
+      "Grade": 7,
+      "HalfLifeDays": 14,
+      "RangeTiles": -1,
+      "Meters": {
+        "confront": { "Weight": 1, "OwnerTrustExempt": true }
+      },
+      "Phrases": {
+        "Full": "{actor} go into {owners} bedroom[ and stay about {p:stayMinutes} minutes]",
+        "Reduced": "{actor} near {owners} bedroom",
+        "Glimpse": "in the back rooms of the house",
+        "Past": "{actor} went into {owners} bedroom[ and stayed about {p:stayMinutes} minutes]"
+      }
+    },
+
+    "sleep_outside": {
+      "Grade": 6,
+      "HalfLifeDays": 7,
+      "RangeTiles": 12,
+      "MinCertainty": 3,
+      "Meters": {
+        "confront": { "Weight": 0.6 },
+        "tenderness": { "Weight": 0.5 },
+        "humor": { "Weight": 0.3 }
+      },
+      "Tokens": {
+        "whenText": { "From": "reason", "Map": { "2am": " in the middle of the night" } }
+      },
+      "Phrases": {
+        "Full": "{actor} pass out on the ground[, {nearPhrase}]{whenText}",
+        "Reduced": "{actor} lying on the ground[, {nearPhrase}]",
+        "Glimpse": "lying on the ground[, {nearPhrase}]",
+        "Past": "{actor} passed out on the ground[ ({nearPhrase})]"
+      }
+    },
+
+    "trash": {
+      "Grade": 5,
+      "HalfLifeDays": 7,
+      "RangeTiles": 8,
+      "Meters": {
+        "confront": { "Weight": 1 }
+      },
+      "Phrases": {
+        "Full": "{actor} dig through [the trash can outside {owners} home|a trash can]",
+        "Reduced": "{actor} rummaging around a trash can[ outside {owners} home]",
+        "Glimpse": "by the trash cans[ outside {owners} home]",
+        "Past": "{actor} dug through [the trash can outside {owners} home|a trash can]"
+      }
+    },
+
+    "gift": {
+      "Grade": 4,
+      "HalfLifeDays": 5,
+      "RangeTiles": 10,
+      "Meters": {
+        "tenderness": { "Weight": 2, "Roles": [ "target" ] }
+      },
+      "Rules": [
+        {
+          "Name": "a gift they didn't want",
+          "When": { "Role": [ "target" ], "Payload": { "taste": "hated" } },
+          "Set": { "tenderness": 0 }
+        },
+        {
+          "Name": "a gift that missed",
+          "When": { "Role": [ "target" ], "Payload": { "taste": "disliked" } },
+          "Set": { "tenderness": 0 }
+        }
+      ],
+      "Tokens": {
+        "tasteText": {
+          "From": "taste",
+          "Map": {
+            "loved": "{target} loved it",
+            "liked": "{target} liked it",
+            "disliked": "{target} didn't like it",
+            "hated": "{target} hated it"
+          }
+        },
+        "tasteVerb": {
+          "From": "taste",
+          "Map": { "loved": "loved", "liked": "liked", "disliked": "disliked", "hated": "hated" }
+        }
+      },
+      "Phrases": {
+        "Full": "{actor} give {target} {a:item}[ for {targetPossessive} birthday][ — {tasteText}][, while {n:partner} was standing right there][, {nearPhrase}]",
+        "Reduced": "{actor} hand {target} something[, while {n:partner} was standing right there]",
+        "Glimpse": "handing something to {target}",
+        "Past": "{actor} gave {target} {a:item}[ for their birthday][, and {target} {tasteVerb} it][ while {n:partner} watched]"
+      }
+    },
+
+    "room_locked": {
+      "Grade": 4,
+      "HalfLifeDays": 14,
+      "RangeTiles": -1,
+      "Meters": {
+        "confront": { "Weight": 1 }
+      },
+      "Phrases": {
+        "Full": "{actor} try to open {owners} bedroom door and get turned away[ — you watched them try it {seen?|#} times|[ (they tried it {attempt?|#} times today)]]",
+        "Reduced": "{actor} at {owners} bedroom door",
+        "Glimpse": "by the bedroom doors",
+        "Past": "{actor} tried {owners} bedroom door and was turned away"
+      }
+    },
+
+    "talk": {
+      "Grade": 3,
+      "HalfLifeDays": 3,
+      "RangeTiles": 10,
+      "VariantBy": "secretMode",
+      "Variants": {
+        "secret": {
+          "Full": "{actor} talking quietly with {target}[ {p:turns?|for a while}][, {nearPhrase}]",
+          "Reduced": "{actor} talking with {target}",
+          "Glimpse": "talking with someone",
+          "Past": "{actor} talked quietly with {target}"
+        },
+        "open": {
+          "Full": "{actor} talking with {target}[ {p:turns?|for a while}][ — {actor} said \"{p:said}\"[ and {target} answered \"{p:replied}\"]]",
+          "Reduced": "{actor} talking with {target}[ about \"{p:topic}\"]",
+          "Glimpse": "talking with someone",
+          "Past": "{actor} talked with {target}[ about \"{p:topic}\"]"
+        }
+      }
+    },
+
+    "room_unlocked": {
+      "Grade": 3,
+      "HalfLifeDays": 14,
+      "RangeTiles": -1,
+      "Meters": {
+        "confront": { "Weight": 0.5, "OwnerTrustExempt": true }
+      },
+      "Phrases": {
+        "Full": "{actor} open {owners} bedroom door for the first time",
+        "Reduced": "{actor} going through {owners} bedroom door",
+        "Glimpse": "by the bedroom doors",
+        "Past": "{actor} opened {owners} bedroom door for the first time"
+      }
+    },
+
+    "purchase": {
+      "Grade": 2,
+      "HalfLifeDays": 2,
+      "RangeTiles": -1,
+      "Phrases": {
+        "Full": "{actor} buy {p:items} [from {you:vendor}|at [{p:shopDisplay}|{location}]]",
+        "Reduced": "{actor} buying something at [{p:shopDisplay}|{location}]",
+        "Glimpse": "at the counter of [{p:shopDisplay}|{location}]",
+        "Past": "{actor} bought {p:items} at [{p:shopDisplay}|{location}]"
+      }
+    },
+
+    "consume": {
+      "Grade": 2.5,
+      "HalfLifeDays": 2,
+      "RangeTiles": 8,
+      "Meters": {
+        "confront": { "Weight": 1, "RequiresPayload": "alcohol" },
+        "humor": { "Weight": 1, "RequiresPayload": "alcohol" }
+      },
+      "Rules": [
+        {
+          "Name": "Shane thinks it's a laugh",
+          "When": { "Witness": [ "Shane" ], "Payload": { "kind": "alcohol" } },
+          "Multiply": { "humor": 3, "confront": 0 },
+          "Phrases": {
+            "Full": "{actor} throwing back [{p:item} {count?|#} times in a row|{a:item}][, {nearPhrase}] — the kind of evening you know well",
+            "Reduced": "{actor} drinking something[, {nearPhrase}]"
+          }
+        },
+        {
+          "Name": "Gus sees a good customer",
+          "When": { "Witness": [ "Gus" ], "Payload": { "kind": "alcohol" } },
+          "Multiply": { "humor": 1.5, "confront": 0 },
+          "Reward": { "Item": "(O)346", "CountByTier": [ 1, 2, 3 ] },
+          "Phrases": {
+            "Full": "{actor} putting away [{p:item} {count?|#} times in a row|{a:item}][, {nearPhrase}] — good for business, and good company"
+          }
+        },
+        {
+          "Name": "Penny minds the children",
+          "When": {
+            "Witness": [ "Penny" ],
+            "Payload": { "kind": "alcohol" },
+            "NearbyAge": { "Age": "child", "Tiles": 8 }
+          },
+          "Multiply": { "confront": 6, "humor": 0 },
+          "Phrases": {
+            "Full": "{actor} drinking [{p:item} {count?|#} times in a row|{a:item}] with {p:nearbychildCount?a child|# children} right there — a bad example to be setting[, {nearPhrase}]"
+          }
+        }
+      ],
+      "VariantBy": "p:kind",
+      "Variants": {
+        "alcohol": {
+          "Full": "{actor} drink [{p:item} {count?|#} times in a row|{a:item}][, {nearPhrase}][ — that's {seen?|#} drinks you've watched them have today]",
+          "Reduced": "{actor} drinking something[, {nearPhrase}]",
+          "Glimpse": "with something in hand[, {nearPhrase}]",
+          "Past": "{actor} drank [{count?|#}× {p:item}|{a:item}][ ({nearPhrase})]"
+        },
+        "drink": {
+          "Full": "{actor} drink [{p:item} {count?|#} times in a row|{a:item}][, {nearPhrase}]",
+          "Reduced": "{actor} drinking something[, {nearPhrase}]",
+          "Glimpse": "with something in hand[, {nearPhrase}]",
+          "Past": "{actor} drank [{count?|#}× {p:item}|{a:item}][ ({nearPhrase})]"
+        },
+        "default": {
+          "Full": "{actor} eat [{p:item} {count?|#} times in a row|{a:item}][, {nearPhrase}]",
+          "Reduced": "{actor} eating something[, {nearPhrase}]",
+          "Glimpse": "with something in hand[, {nearPhrase}]",
+          "Past": "{actor} ate [{count?|#}× {p:item}|{a:item}][ ({nearPhrase})]"
+        }
+      }
+    },
+
+    "place": {
+      "Grade": 2,
+      "HalfLifeDays": 2,
+      "RangeTiles": 8,
+      "VariantBy": "p:action",
+      "Variants": {
+        "enter": {
+          "Full": "{actor} go into {place}",
+          "Reduced": "{actor} heading into {place}",
+          "Glimpse": "near a doorway",
+          "Past": "{actor} went into [{p:placeDisplay}|{location}]"
+        },
+        "leave": {
+          "Full": "{actor} come out of {place}",
+          "Reduced": "{actor} coming out of {place}",
+          "Glimpse": "near a doorway",
+          "Past": "{actor} came out of [{p:placeDisplay}|{location}]"
+        }
+      }
+    },
+
+    "map": {
+      "Grade": 1,
+      "HalfLifeDays": 1,
+      "RangeTiles": 8,
+      "Phrases": {
+        "Full": "{actor} head from [{p:fromDisplay}|somewhere] toward [{p:toDisplay}|somewhere][, {nearPhrase}]",
+        "Reduced": "{actor} passing through[, {nearPhrase}]",
+        "Glimpse": "passing through",
+        "Past": "{actor} went from [{p:fromDisplay}|somewhere] to [{p:toDisplay}|somewhere]"
+      }
+    },
+
+    "npc_move": {
+      "Grade": 1,
+      "HalfLifeDays": 1,
+      "RangeTiles": -1,
+      "Phrases": {
+        "Full": "{actor} arrive at [{p:placeDisplay}|{location}]",
+        "Reduced": "{actor} coming in",
+        "Glimpse": "coming in",
+        "Past": "{actor} arrived at [{p:placeDisplay}|{location}]"
+      }
+    }
+  }
+}

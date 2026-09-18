@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+*.user
+*.suo
+
+# IDE
+.vs/
+.idea/
+.vscode/
+
+# Local machine settings (GamePath belongs in %USERPROFILE%\stardewvalley.targets)
+stardewvalley.targets
+
+# Runtime files written by the game — never commit these
+config.json
+Data/
+event-types/
+*.log

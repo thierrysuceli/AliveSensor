@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>AliveSensor</AssemblyName>
+    <RootNamespace>AliveSensor</RootNamespace>
+    <Version>0.1.0</Version>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+
+    <!--
+      GamePath is deliberately not set here. ModBuildConfig finds a normal Steam/GOG install on its own.
+      For an install it cannot find (Xbox Game Pass, or a custom folder), create this file once and every
+      Stardew mod project on the machine picks it up:
+
+        %USERPROFILE%\stardewvalley.targets
+
+        <Project>
+          <PropertyGroup>
+            <GamePath>C:\XboxGames\Stardew Valley\Content</GamePath>
+          </PropertyGroup>
+        </Project>
+    -->
+    <ModFolderName>AliveSensor</ModFolderName>
+    <EnableHarmony>true</EnableHarmony>
+    <EnableModZip>false</EnableModZip>
+
+    <!-- Xbox Game Pass: "Stardew Valley.exe" is access-protected, so never probe .exe files for references. -->
+    <AllowedReferenceAssemblyFileExtensions>.winmd;.dll</AllowedReferenceAssemblyFileExtensions>
+    <!-- SpaceCore references newer System.* facades than net6.0; harmless at runtime. -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.*" />
+  </ItemGroup>
+
+  <!-- Dependencies: referenced to compile against, never copied into the mod folder. -->
+  <ItemGroup>
+    <Reference Include="AliveNpcs">
+      <HintPath>$(GamePath)\Mods\AliveNpcs\AliveNpcs\AliveNpcs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(GamePath)\smapi-internal\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SpaceCore">
+      <HintPath>$(GamePath)\Mods\SpaceCore\SpaceCore.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Shipped content: translations and the event catalog sensors are declared in. -->
+  <ItemGroup>
+    <None Update="i18n\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="assets\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
